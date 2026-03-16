@@ -74,27 +74,42 @@ else
     echo "    Then re-run this script to verify."
 fi
 
+# --- Boot disk image ---
+USR_BIN_DIR="$REPO_DIR/usr-bin"
+BOOT_SRC="$USR_BIN_DIR/kayproiv.img"
+BOOT_MFI="$REPO_DIR/bin/kayproiv.mfi"
+
+if [ -f "$BOOT_SRC" ]; then
+    echo "==> Converting boot image to MFI format..."
+    mkdir -p "$REPO_DIR/bin"
+    floptool flopconvert kaypro2x mfi "$BOOT_SRC" "$BOOT_MFI"
+    echo "==> Boot image ready."
+else
+    echo "==> Boot image not ready. Place kayproiv.img in usr-bin/ and re-run setup."
+    echo "    See: https://archive.org/details/kaypro-disk-cpm-2.2-and-s-basic"
+fi
+
 # --- MAME ROM zip ---
-MAME_ROMS_DIR="$REPO_DIR/.mame/roms"
-ROM_ZIP="$MAME_ROMS_DIR/kayproiv.zip"
+BIN_ROMS_DIR="$REPO_DIR/bin/roms"
+ROM_ZIP="$BIN_ROMS_DIR/kayproiv.zip"
 ROM_FILES=(81-232.u47 81-146.u43 m5l8049.bin)
 MISSING_ROMS=()
 
 for rom in "${ROM_FILES[@]}"; do
-    [ -f "$REPO_DIR/.mame/$rom" ] || MISSING_ROMS+=("$rom")
+    [ -f "$USR_BIN_DIR/$rom" ] || MISSING_ROMS+=("$rom")
 done
 
 if [ ${#MISSING_ROMS[@]} -eq 0 ]; then
     echo "==> Packaging MAME ROMs into $ROM_ZIP..."
-    mkdir -p "$MAME_ROMS_DIR"
-    cd "$REPO_DIR/.mame"
+    mkdir -p "$BIN_ROMS_DIR"
+    cd "$USR_BIN_DIR"
     zip -j "$ROM_ZIP" "${ROM_FILES[@]}"
     cd "$REPO_DIR"
     echo "==> MAME ROMs ready."
 else
-    echo "==> MAME ROMs not ready. Place the following files in .mame/ and re-run setup:"
+    echo "==> MAME ROMs not ready. Place the following files in usr-bin/ and re-run setup:"
     for rom in "${MISSING_ROMS[@]}"; do
-        echo "      .mame/$rom"
+        echo "      usr-bin/$rom"
     done
     echo "    See: http://www.retroarchive.org/maslin/roms/kaypro/index.html"
 fi

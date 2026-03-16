@@ -1,5 +1,5 @@
 build/
-disk/*
-!disk/README.md
+bin/
+usr-bin/*
+!usr-bin/README.md
 tools/
-.mame/

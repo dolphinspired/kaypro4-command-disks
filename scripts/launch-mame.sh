@@ -3,8 +3,9 @@ set -e
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MAME="${MAME:-/usr/games/mame}"
-IMAGE="$REPO_DIR/disk/kaypro4.img"
-BUILD_IMAGE="$REPO_DIR/disk/build.img"
+MFI_IMAGE="$REPO_DIR/bin/kayproiv.mfi"
+BUILD_IMAGE="$REPO_DIR/bin/build.img"
+MFI_BUILD="$REPO_DIR/bin/build.mfi"
 
 if [ ! -x "$MAME" ]; then
     echo "ERROR: MAME not found at $MAME"
@@ -13,9 +14,9 @@ if [ ! -x "$MAME" ]; then
     exit 1
 fi
 
-if [ ! -f "$IMAGE" ]; then
-    echo "ERROR: Base disk image not found at $IMAGE"
-    echo "See README.md for instructions on obtaining the Kaypro 4 CP/M boot image."
+if [ ! -f "$MFI_IMAGE" ]; then
+    echo "ERROR: Boot disk image not found at $MFI_IMAGE"
+    echo "Place kayproiv.img in usr-bin/ and run 'make setup' first."
     exit 1
 fi
 
@@ -25,15 +26,12 @@ if [ ! -f "$BUILD_IMAGE" ]; then
     exit 1
 fi
 
-# MAME can't auto-detect raw Kaypro sector images; convert to MFI first.
+# MAME can't auto-detect raw Kaypro sector images; convert build image to MFI.
 # kaypro2x = 80-track single-sided 5.25" DSDD, matching the Kaypro IV format.
-MFI_IMAGE="$REPO_DIR/disk/kaypro4.mfi"
-MFI_BUILD="$REPO_DIR/disk/build.mfi"
-
-floptool flopconvert kaypro2x mfi "$IMAGE" "$MFI_IMAGE"
+# (Boot image was already converted to MFI during 'make setup'.)
 floptool flopconvert kaypro2x mfi "$BUILD_IMAGE" "$MFI_BUILD"
 
 # Native resolution is 560x240. Use 1120x480 here for a readable 2x integer scale.
 echo "Launching MAME. Press Alt+F4 to close."
-exec "$MAME" kayproiv -rompath "$REPO_DIR/.mame/roms" -flop1 "$MFI_IMAGE" -flop2 "$MFI_BUILD" \
+exec "$MAME" kayproiv -rompath "$REPO_DIR/bin/roms" -flop1 "$MFI_IMAGE" -flop2 "$MFI_BUILD" \
     -window -nomaximize -resolution 1120x480

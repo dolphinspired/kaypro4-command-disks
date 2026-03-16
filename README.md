@@ -1,6 +1,10 @@
-# Kaypro 4 C Development Toolchain
+# Kaypro IV C Development Toolchain
 
-Write C programs, compile to CP/M `.COM` binaries, and deploy to a physical Kaypro 4 via floppy disk.
+> **Experimental.** This toolchain is a work in progress. Expect there might be some incorrect assumptions or misleading directions while we're working through the process.
+
+An experimental pipeline for writing C programs, compiling to CP/M `.COM` binaries, and deploying to a physical **Kaypro IV**  via 5.25" floppy disk.
+
+> **Important:** This project targets the **Kaypro IV (1983)** (Roman numeral, 1983), also sold as the "4/83". It is _not_ compatible with the Kaypro 4 (Arabic numeral, 1984 / "4/84"), which has different hardware. Documentation, ROMs, and disk images for the 1984 model will not work correctly here.
 
 ## Prerequisites
 
@@ -8,7 +12,7 @@ Write C programs, compile to CP/M `.COM` binaries, and deploy to a physical Kayp
 sudo apt install build-essential libncurses-dev libboost-dev git
 ```
 
-You'll also need greaseweazle installed for floppy writing, and a CP/M 2.2 boot image (see `disk/README.md`).
+You'll also need greaseweazle installed for floppy writing, and a CP/M 2.2 boot image (see [usr-bin README](usr-bin/README.md)).
 
 ## First-time setup
 
@@ -56,15 +60,17 @@ Launches MAME with the Kaypro IV driver in a windowed 1120×480 display (2× int
 
 ```bash
 make image
-tools/z80pack/cpmsim/cpmsim -d disk/kaypro4.img
+tools/z80pack/cpmsim/cpmsim -d bin/kayproiv.img
 ```
 
 **5. Write to floppy:**
+(UNTESTED)
+
 ```bash
 make image
-gw write --drive A --format kaypro.800 disk/kaypro4.img
+gw write --drive A --format kaypro.800 bin/kayproiv.img
 ```
 
-## Boot Image
+## Boot Image and ROM Files
 
-`make image` requires a base CP/M 2.2 boot image. See `disk/README.md` for instructions.
+`make image` and `make launch-mame` require user-supplied files. See `usr-bin/README.md` for instructions on where to obtain them. After placing them in `usr-bin/`, run `make setup` to copy them into `bin/`.

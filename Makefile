@@ -24,4 +24,4 @@ launch-mame: image
 	bash scripts/launch-mame.sh
 
 clean:
-	rm -rf build/ disk/build.img
+	rm -rf build/ bin/

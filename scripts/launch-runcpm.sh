@@ -5,8 +5,9 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DRIVE_DIR="$REPO_DIR/tools/runcpm-drive/A/0"
 mkdir -p "$REPO_DIR/tools/runcpm-drive/A"
 
-# Symlink A/0 → build/ so RunCPM always sees the latest compiled binaries
-if [ ! -L "$DRIVE_DIR" ]; then
+# Symlink A/0 → build/ so RunCPM always sees the latest compiled binaries.
+# Recreate if missing, not a symlink, or pointing to the wrong target (e.g. stale path after repo move).
+if [ ! -L "$DRIVE_DIR" ] || [ "$(readlink "$DRIVE_DIR")" != "$REPO_DIR/build" ]; then
     rm -rf "$DRIVE_DIR"
     ln -s "$REPO_DIR/build" "$DRIVE_DIR"
 fi

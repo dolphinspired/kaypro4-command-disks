@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
-# Creates disk/build.img — a blank Kaypro 4 CP/M disk containing all compiled
-# .COM files. Intended for use as drive B alongside the base kaypro4.img.
-# Requires disk/kaypro4.img to exist — see README for how to obtain it.
+# Creates bin/build.img — a blank Kaypro 4 CP/M disk containing all compiled
+# .COM files. Intended for use as drive B alongside the base kayproiv.mfi.
+# Requires bin/kayproiv.mfi to exist — run 'make setup' first.
 set -e
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MKFS="$REPO_DIR/tools/cpmtools/bin/mkfs.cpm"
 CPMCP="$REPO_DIR/tools/cpmtools/bin/cpmcp"
 DISKDEFS_DIR="$REPO_DIR/tools/cpmtools/share"
-BASE_IMAGE="$REPO_DIR/disk/kaypro4.img"
-BUILD_IMAGE="$REPO_DIR/disk/build.img"
+BUILD_IMAGE="$REPO_DIR/bin/build.img"
 
 # 80 tracks × 1 head × 10 sectors × 512 bytes = 409600 bytes
 DISK_SIZE=409600
 
-if [ ! -f "$BASE_IMAGE" ]; then
-    echo "ERROR: Base boot image not found at $BASE_IMAGE"
-    echo "See README.md for instructions on obtaining the Kaypro 4 CP/M boot image."
+if [ ! -f "$REPO_DIR/bin/kayproiv.mfi" ]; then
+    echo "ERROR: Boot image not found at bin/kayproiv.mfi"
+    echo "Place kayproiv.img in usr-bin/ and run 'make setup' first."
     exit 1
 fi
 
-mkdir -p "$REPO_DIR/disk"
+mkdir -p "$REPO_DIR/bin"
 
 # cpmtools looks for 'diskdefs' in the current directory first, so run from there
 cd "$DISKDEFS_DIR"
@@ -37,3 +36,4 @@ done
 
 echo "Build image ready: $BUILD_IMAGE"
 echo "To write to floppy: gw write --drive B --format kaypro.800 $BUILD_IMAGE"
+
