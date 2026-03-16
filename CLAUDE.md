@@ -12,11 +12,6 @@ make image      # Compile then bundle .COM files into disk/kaypro4.img
 make clean      # Delete build/ and disk/
 ```
 
-To compile a single file manually:
-```bash
-ZCCCFG=tools/z88dk/lib/config tools/z88dk/bin/zcc +kaypro -create-app -lndos -o build/FOO.COM src/foo.c
-```
-
 To run a program interactively in RunCPM:
 ```bash
 mkdir -p tools/runcpm-drive/A/0
@@ -28,9 +23,9 @@ cd tools/runcpm-drive && ../runcpm/RunCPM
 
 The pipeline has four stages: **compile → emulate (fast) → emulate (accurate) → deploy**.
 
-**Compile** (`src/` → `build/`): Z88DK's `zcc` with `+kaypro` targets the Kaypro 4 specifically — it links the correct startup code and ADM-3A terminal init. `-lndos` uses a minimal CP/M I/O library. Output filenames must be uppercase `.COM` (CP/M convention); the Makefile handles this via the pattern rule.
+**Compile** (`src/` → `build/`): Z88DK's `zcc` uses `+cpm -subtype=kaypro84` — `+kaypro` does not exist as a top-level target. The `kaypro84` subtype (vs `kaypro83` for the Kaypro II) sets 80×25 console and links the Kaypro 4 graphics lib. Output filenames must be uppercase `.COM` (CP/M convention); the Makefile handles this via the pattern rule.
 
-**Fast emulation** (RunCPM): Treats a directory tree as CP/M drives — `tools/runcpm-drive/A/0/` maps to drive A. The test runner in `test/run_tests.sh` automates this by feeding stdin to RunCPM (program name from `input.txt` then `^C` to quit). RunCPM is an interactive shell, not a single-program launcher, so output includes a banner and prompt that the test runner strips with `sed` before diffing against `expected.txt`.
+**Fast emulation** (RunCPM): Treats a directory tree as CP/M drives — `tools/runcpm-drive/A/0/` maps to drive A. The test runner in `test/run_tests.sh` automates this by feeding stdin to RunCPM (program name from `input.txt` then `^C` to quit). RunCPM is an interactive shell, not a single-program launcher. The test runner strips noise by: removing ANSI escape codes, stripping `\r` (RunCPM uses CRLF), collapsing backspace-based echo sequences (`_\b \bX` → `X`), and extracting only lines between the first `A0>` prompt line and the next one. `expected.txt` should match this cleaned output. Also: `fgets` in CP/M programs receives `\r\n` line endings — always strip with `strcspn(name, "\r\n")`, not just `"\n"`.
 
 **Accurate emulation** (Z80Pack): Boots from an actual Kaypro IV disk image. Requires `disk/kaypro4.img` sourced from Archive.org (not in repo) — `scripts/make_image.sh` copies it and adds `.COM` files via cpmtools.
 

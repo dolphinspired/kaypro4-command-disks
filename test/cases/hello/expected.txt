@@ -1,2 +1,2 @@
-Enter your name: Hello, Nuffle
-!
+Enter your name: Nuffle
+Hello, Nuffle!

@@ -13,7 +13,7 @@ set -e
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 RUNCPM="$REPO_DIR/tools/runcpm/RunCPM"
 DRIVE_DIR="$REPO_DIR/tools/runcpm-drive"
-CASES_DIR="$(dirname "$0")/cases"
+CASES_DIR="$REPO_DIR/test/cases"
 PASS=0
 FAIL=0
 
@@ -43,14 +43,22 @@ for case_dir in "$CASES_DIR"/*/; do
     # Feed: the program invocation from input.txt, then exit RunCPM
     actual=$(cd "$DRIVE_DIR" && (cat "$input"; printf '\x03') | timeout 10 "$RUNCPM" 2>/dev/null || true)
 
-    # Strip RunCPM banner lines (everything before the first program output).
-    # RunCPM prints "RunCPM vX.X" and a blank line before the CP/M prompt.
-    # We strip leading non-blank header lines and the prompt itself.
-    actual_clean=$(echo "$actual" | sed '/^RunCPM/d' | sed '/^$/d' | sed 's/^A0>//')
+    # Strip RunCPM output noise and extract only the program's output:
+    #   1. Strip ANSI escape sequences
+    #   2. Strip carriage returns (\r) — RunCPM outputs CRLF line endings
+    #   3. Process backspace sequences — RunCPM echoes typed chars as _\b \bX; collapse to X
+    #   4. Extract lines between the first A0> prompt (command entry) and the next A0> prompt
+    #   5. Remove trailing blank lines
+    actual_clean=$(printf '%s' "$actual" \
+        | sed 's/\x1b\[[?0-9;]*[a-zA-Z]//g' \
+        | tr -d '\r' \
+        | sed -e ':bs' -e 's/[^\x08]\x08//g' -e 't bs' \
+        | awk '/^A0>/ && !found { found=1; next } /^A0>/ && found { exit } /^RunCPM Version/ && found { exit } found { print }' \
+        | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
 
     if diff -q <(printf '%s\n' "$actual_clean") "$expected" > /dev/null 2>&1; then
         echo "PASS: $prog"
-        ((PASS++))
+        PASS=$((PASS + 1))
     else
         echo "FAIL: $prog"
         echo "  --- expected ---"
@@ -59,7 +67,7 @@ for case_dir in "$CASES_DIR"/*/; do
         printf '%s\n' "$actual_clean"
         echo "  --- diff ---"
         diff <(printf '%s\n' "$actual_clean") "$expected" || true
-        ((FAIL++))
+        FAIL=$((FAIL + 1))
     fi
 done
 
