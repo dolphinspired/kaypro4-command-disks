@@ -19,11 +19,22 @@ cp build/FOO.COM tools/runcpm-drive/A/0/
 cd tools/runcpm-drive && ../runcpm/RunCPM
 ```
 
+## Target Machine
+
+**Kaypro IV** (Roman numeral, 1983 model — also called 4/83)
+- CP/M version: 2.2f
+- Mainboard: 81.240
+- ROM/BIOS revision: 81-232-A
+
+**IMPORTANT — naming distinction:** The Kaypro IV (Roman numeral, 1983) and the Kaypro 4 (Arabic numeral, 1984 / "4/84") are meaningfully different machines with different hardware capabilities. Do not conflate them. Any documentation, hardware reference, or online resource that refers to the "Kaypro 4" or "4/84" may describe hardware (e.g. real-time clock, internal modem, second serial port) that is absent on the Kaypro IV. Always verify which model a source applies to.
+
 ## Architecture
 
 The pipeline has four stages: **compile → emulate (fast) → emulate (accurate) → deploy**.
 
 **Compile** (`src/` → `build/`): Z88DK's `zcc` uses `+cpm -subtype=kaypro84` — `+kaypro` does not exist as a top-level target. The `kaypro84` subtype (vs `kaypro83` for the Kaypro II) sets 80×25 console and links the Kaypro 4 graphics lib. Output filenames must be uppercase `.COM` (CP/M convention); the Makefile handles this via the pattern rule.
+
+> **TODO — verify Z88DK subtype:** The `kaypro84` subtype name suggests the 1984 model. It is unclear whether this is the correct subtype for the Kaypro IV (1983). Compare `kaypro83` vs `kaypro84` Z88DK behavior to confirm the right target.
 
 **Fast emulation** (RunCPM): Treats a directory tree as CP/M drives — `tools/runcpm-drive/A/0/` maps to drive A. The test runner in `test/run_tests.sh` automates this by feeding stdin to RunCPM (program name from `input.txt` then `^C` to quit). RunCPM is an interactive shell, not a single-program launcher. The test runner strips noise by: removing ANSI escape codes, stripping `\r` (RunCPM uses CRLF), collapsing backspace-based echo sequences (`_\b \bX` → `X`), and extracting only lines between the first `A0>` prompt line and the next one. `expected.txt` should match this cleaned output. Also: `fgets` in CP/M programs receives `\r\n` line endings — always strip with `strcspn(name, "\r\n")`, not just `"\n"`.
 
@@ -38,6 +49,15 @@ Create `test/cases/<progname>/` with two files:
 - `expected.txt` — expected stdout (after RunCPM banner/prompt are stripped)
 
 The test runner upcases the directory name to find the matching `.COM` in `build/`.
+
+## Reference Docs
+
+Summaries of researched hardware and software capabilities are in `docs/`:
+
+- `docs/reference-documents.md` — overview of source PDFs consulted: CP/M intro guide and Kaypro addendum (WARNING: addendum covers the 4/84, not the IV — verify before applying)
+- `docs/bios-capabilities.md` — BIOS function table, I/O port map, and ROM call conventions for the Kaypro IV; derived from community disassembly of `bios_22f_IV.s`
+- `docs/rom-capabilities.md` — ROM entry points, video/keyboard/serial routines, and disk bootstrap; derived from community disassembly of `81-232.s` (confirmed closest match to ROM 81-232-A, but applicability unverified)
+- `docs/capability-exploration.md` — platform constraints, available Z88DK APIs, and notes from hands-on capability testing programs
 
 ## Known Gotchas
 
