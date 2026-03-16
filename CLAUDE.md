@@ -78,3 +78,7 @@ Summaries of researched hardware and software capabilities are in `docs/`:
 - **RunCPM test automation**: Works for programs that read from stdin normally. Raw terminal / curses programs will not work with this approach and need an `expect` script.
 - **Z88DK `ZCCCFG`**: Must be set to `tools/z88dk/lib/config` at both build time (setup.sh) and compile time (Makefile). Without it, zcc cannot find its configuration.
 - **`tools/` is gitignored**: Running `make setup` on a fresh clone rebuilds everything from source.
+
+## ROM dumps
+
+Kaypro chip ROM dumps can be downloaded [here](http://www.retroarchive.org/maslin/roms/kaypro/index.html).
