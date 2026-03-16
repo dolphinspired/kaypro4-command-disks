@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Creates bin/build.img — a blank Kaypro 4 CP/M disk containing all compiled
-# .COM files. Intended for use as drive B alongside the base kayproiv.mfi.
-# Requires bin/kayproiv.mfi to exist — run 'make setup' first.
+# Creates bin/build.img — a blank Kaypro CP/M disk containing all compiled
+# .COM files. Used as drive B in MAME alongside the boot image.
+# Requires cpmtools to be built — run 'make setup' first.
 set -e
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -10,12 +10,12 @@ CPMCP="$REPO_DIR/tools/cpmtools/bin/cpmcp"
 DISKDEFS_DIR="$REPO_DIR/tools/cpmtools/share"
 BUILD_IMAGE="$REPO_DIR/bin/build.img"
 
-# 80 tracks × 1 head × 10 sectors × 512 bytes = 409600 bytes
+# 40 cylinders × 2 heads × 10 sectors × 512 bytes = 409600 bytes
 DISK_SIZE=409600
 
-if [ ! -f "$REPO_DIR/bin/kayproiv.mfi" ]; then
-    echo "ERROR: Boot image not found at bin/kayproiv.mfi"
-    echo "Place kayproiv.img in usr-bin/ and run 'make setup' first."
+if [ ! -x "$MKFS" ]; then
+    echo "ERROR: cpmtools not found at $MKFS"
+    echo "Run 'make setup' first."
     exit 1
 fi
 

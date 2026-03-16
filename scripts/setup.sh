@@ -77,13 +77,9 @@ fi
 # --- Boot disk image ---
 USR_BIN_DIR="$REPO_DIR/usr-bin"
 BOOT_SRC="$USR_BIN_DIR/kayproiv.img"
-BOOT_MFI="$REPO_DIR/bin/kayproiv.mfi"
 
 if [ -f "$BOOT_SRC" ]; then
-    echo "==> Converting boot image to MFI format..."
-    mkdir -p "$REPO_DIR/bin"
-    floptool flopconvert kaypro2x mfi "$BOOT_SRC" "$BOOT_MFI"
-    echo "==> Boot image ready."
+    echo "==> Boot image found."
 else
     echo "==> Boot image not ready. Place kayproiv.img in usr-bin/ and re-run setup."
     echo "    See: https://archive.org/details/kaypro-disk-cpm-2.2-and-s-basic"
