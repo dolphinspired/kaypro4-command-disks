@@ -24,7 +24,12 @@ if [ ! -f "$TOOLS_DIR/runcpm/RunCPM" ]; then
     if [ ! -d "$TOOLS_DIR/runcpm-src" ]; then
         git clone --depth=1 https://github.com/MockbaTheBorg/RunCPM.git "$TOOLS_DIR/runcpm-src"
     fi
-    cd "$TOOLS_DIR/runcpm-src/RunCPM"
+    cd "$TOOLS_DIR/runcpm-src"
+    # This patch to RunCPM changes the raw input of the Backspace key so that it
+    # works as expected. Without this patch, pressing Backspace just produces "?"
+    # in the terminal.
+    patch -p1 < "$REPO_DIR/patches/runcpm-backspace.patch"
+    cd RunCPM
     make -f Makefile.posix
     mkdir -p "$TOOLS_DIR/runcpm"
     cp RunCPM "$TOOLS_DIR/runcpm/"

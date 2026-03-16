@@ -1,0 +1,12 @@
+--- a/RunCPM/abstraction_posix.h
++++ b/RunCPM/abstraction_posix.h
+@@ -627,7 +627,8 @@
+ }
+
+ uint8 _getch(void) {
+-    return getchar();
++    uint8 ch = getchar();
++    return (ch == 0x7f) ? 0x08 : ch; /* translate DEL -> BS for CP/M compatibility */
+ }
+
+ void _putch(uint8 ch) {
