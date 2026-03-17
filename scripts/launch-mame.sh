@@ -3,7 +3,7 @@ set -e
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MAME="${MAME:-/usr/games/mame}"
-BOOT_IMAGE="$REPO_DIR/bin/kayproiv.img"
+BOOT_IMAGE="$REPO_DIR/bin/kayprocpm2.imd"
 BUILD_IMAGE="$REPO_DIR/bin/build.img"
 
 if [ ! -x "$MAME" ]; then

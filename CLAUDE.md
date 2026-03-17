@@ -37,9 +37,13 @@ The pipeline has four stages: **compile → emulate (fast) → emulate (accurate
 
 **Fast emulation** (RunCPM): Treats a directory tree as CP/M drives — `tools/runcpm-drive/A/0/` maps to drive A. The test runner in `test/run_tests.sh` automates this by feeding stdin to RunCPM (program name from `input.txt` then `^C` to quit). RunCPM is an interactive shell, not a single-program launcher. The test runner strips noise by: removing ANSI escape codes, stripping `\r` (RunCPM uses CRLF), collapsing backspace-based echo sequences (`_\b \bX` → `X`), and extracting only lines between the first `A0>` prompt line and the next one. `expected.txt` should match this cleaned output. Also: `fgets` in CP/M programs receives `\r\n` line endings — always strip with `strcspn(name, "\r\n")`, not just `"\n"`.
 
-**Accurate emulation** (MAME): Boots from an actual Kaypro IV disk image. Requires `usr-bin/kayproiv.img` sourced from Archive.org (not in repo). `scripts/make-image.sh` creates `bin/build.img` with compiled `.COM` files; `launch-mame.sh` symlinks both images into `bin/` with `.kay` extension (MAME's native Kaypro raw format) and launches MAME. No floptool conversion needed.
+**Accurate emulation** (MAME): Boots from an actual Kaypro IV disk image. Requires a bootable `usr-bin/kayproiv.img` (not in repo — must be dumped from a physical disk or sourced elsewhere). `scripts/make-image.sh` creates `bin/build.img` with compiled `.COM` files. `launch-mame.sh` passes both images directly to MAME as `-flop1`/`-flop2`. The boot image must be converted to MFI first: `floptool flopconvert kaypro2x mfi usr-bin/kayproiv.img bin/kayproiv.mfi`, then pass `bin/kayproiv.mfi` as `-flop1`. MAME's `kayproiv` driver does not accept `.img` — supported extensions are `.mfi .dfi .hfe .mfm .td0 .imd .d77 .d88 .1dd .cqm .cqi .dsk .kay`.
 
-**Deploy** (greaseweazle): `gw write --drive A --format kaypro.800 bin/kayproiv.img` — format string may need verification against installed gw version.
+> **TODO — boot disk**: The `usr-bin/kayproiv.img` images tested so far have a dead boot sector (`JR $` at offset 0) and do not boot in MAME. A proper bootable Kaypro IV disk image is needed. Best source: dump a known-good physical disk using Greaseweazle (see Deploy below), or find `kiv-22.imd` (SHA1: `d4b5a6a0a0038fc12aa39a7dd17006f1c71198df`) from the MAME software list.
+
+**Deploy** (greaseweazle): Correct format string is `kaypro.dsdd.40` (verified from [Greaseweazle diskdefs](https://github.com/keirf/greaseweazle/blob/master/src/greaseweazle/data/diskdefs_kaypro.cfg)).
+- Read physical disk: `gw read --drive A --format kaypro.dsdd.40 kayproiv-boot.imd`
+- Write to physical disk: `gw write --drive A --format kaypro.dsdd.40 bin/build.img`
 
 ## Adding a Test Case
 
@@ -61,7 +65,7 @@ Summaries of researched hardware and software capabilities are in `docs/`:
 ## Known Gotchas
 
 - **cpmtools diskdefs**: Use format name `kpiv` — this is the Kaypro IV entry in the upstream diskdefs (comment has a typo: "Kayro IV"). The diskdefs file at `tools/cpmtools/share/diskdefs` must match the upstream exactly: `https://raw.githubusercontent.com/lipro-cpm4l/cpmtools/refs/heads/cpm4l/cpmtools-2.21/diskdefs`
-- **MAME floppy format**: Pass raw Kaypro images to MAME with `.img` extension — standard raw sector format MAME recognizes. The Kaypro IV uses 40-track double-sided (DSDD) disks; 40 cylinders × 2 heads × 10 sectors × 512 bytes = 409,600 bytes. `floptool flopconvert kaypro2x mfi` is no longer used. The `mame-tools` package is no longer required.
+- **MAME floppy format**: `.img` is NOT in MAME's accepted format list for `kayproiv`. Use MFI: `floptool flopconvert kaypro2x mfi usr-bin/kayproiv.img bin/kayproiv.mfi`, then pass `bin/kayproiv.mfi` to `-flop1`. The Kaypro IV uses 40-track DSDD disks; 40 cylinders × 2 heads × 10 sectors × 512 bytes = 409,600 bytes.
 - **RunCPM test automation**: Works for programs that read from stdin normally. Raw terminal / curses programs will not work with this approach and need an `expect` script.
 - **Z88DK `ZCCCFG`**: Must be set to `tools/z88dk/lib/config` at both build time (setup.sh) and compile time (Makefile). Without it, zcc cannot find its configuration.
 - **`tools/` is gitignored**: Running `make setup` on a fresh clone rebuilds everything from source.
